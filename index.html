@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#e74c3c">
+    <title>Boss SY-1 Tuner</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Заголовок -->
+        <header>
+            <h1><i class="fas fa-guitar"></i> Boss SY-1 Preset Tuner</h1>
+            <p class="subtitle">Real-time настройщик пресетов</p>
+        </header>
+
+        <!-- Выбор пресета -->
+        <section class="preset-selector">
+            <label for="preset-select">
+                <i class="fas fa-list"></i> Выберите пресет:
+            </label>
+            <select id="preset-select">
+                <option value="">-- Выберите пресет --</option>
+            </select>
+            <div id="preset-description" class="preset-description"></div>
+        </section>
+
+        <!-- Аудио контроль -->
+        <section class="audio-control">
+            <button id="start-audio" class="btn-primary">
+                <i class="fas fa-microphone"></i> Включить микрофон
+            </button>
+            <div id="audio-status" class="status-off">
+                <i class="fas fa-circle"></i> Микрофон выключен
+            </div>
+        </section>
+
+        <!-- Детектор ноты -->
+        <section class="note-detector">
+            <h2>🎵 Текущая нота</h2>
+            <div class="note-display">
+                <div id="detected-note" class="note-value">--</div>
+                <div id="frequency" class="frequency-value">-- Hz</div>
+            </div>
+            <canvas id="waveform" width="800" height="150"></canvas>
+        </section>
+
+        <!-- Настройка параметров -->
+        <section class="parameters">
+            <h2>🎛️ Настройка параметров</h2>
+            
+            <!-- TYPE -->
+            <div class="parameter-group">
+                <div class="param-header">
+                    <h3>1️⃣ TYPE Selector</h3>
+                </div>
+                <div class="param-values">
+                    <div class="value-box">
+                        <label>Текущий:</label>
+                        <div id="current-type" class="value">LEAD 1</div>
+                    </div>
+                    <div class="arrow-indicator" id="type-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="value-box target">
+                        <label>Целевой:</label>
+                        <div id="target-type" class="value">--</div>
+                    </div>
+                </div>
+                <button class="btn-confirm" onclick="confirmType()">✓ TYPE установлен</button>
+            </div>
+
+            <!-- GUITAR/BASS Switch -->
+            <div class="parameter-group">
+                <div class="param-header">
+                    <h3>2️⃣ GUITAR/BASS Switch</h3>
+                </div>
+                <div class="param-values">
+                    <div class="value-box">
+                        <label>Текущий:</label>
+                        <div id="current-mode" class="value">GUITAR</div>
+                    </div>
+                    <div class="arrow-indicator" id="mode-arrow">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="value-box target">
+                        <label>Целевой:</label>
+                        <div id="target-mode" class="value">--</div>
+                    </div>
+                </div>
+                <button class="btn-confirm" onclick="confirmMode()">✓ Режим установлен</button>
+            </div>
+
+            <!-- Ручки управления -->
+            <div class="knobs-grid">
+                <!-- VARIATION -->
+                <div class="knob-container">
+                    <h4>VARIATION</h4>
+                    <div class="knob-visual">
+                        <svg viewBox="0 0 200 200" class="knob-svg">
+                            <circle cx="100" cy="100" r="80" fill="#2c3e50" stroke="#34495e" stroke-width="4"/>
+                            <line id="variation-current" x1="100" y1="100" x2="100" y2="40" stroke="#e74c3c" stroke-width="6" stroke-linecap="round"/>
+                            <line id="variation-target" x1="100" y1="100" x2="100" y2="40" stroke="#2ecc71" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+                        </svg>
+                    </div>
+                    <div class="knob-values">
+                        <span>Текущее: <strong id="variation-current-val">1</strong></span>
+                        <span class="arrow-text" id="variation-arrow">→</span>
+                        <span>Целевое: <strong id="variation-target-val">--</strong></span>
+                    </div>
+                    <input type="range" id="variation-slider" min="1" max="11" value="1" class="slider">
+                </div>
+
+                <!-- TONE/RATE -->
+                <div class="knob-container">
+                    <h4>TONE/RATE</h4>
+                    <div class="knob-visual">
+                        <svg viewBox="0 0 200 200" class="knob-svg">
+                            <circle cx="100" cy="100" r="80" fill="#2c3e50" stroke="#34495e" stroke-width="4"/>
+                            <line id="tone-current" x1="100" y1="100" x2="100" y2="40" stroke="#e74c3c" stroke-width="6" stroke-linecap="round"/>
+                            <line id="tone-target" x1="100" y1="100" x2="100" y2="40" stroke="#2ecc71" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+                        </svg>
+                    </div>
+                    <div class="knob-values">
+                        <span>Текущее: <strong id="tone-current-val">5</strong></span>
+                        <span class="arrow-text" id="tone-arrow">→</span>
+                        <span>Целевое: <strong id="tone-target-val">--</strong></span>
+                    </div>
+                    <input type="range" id="tone-slider" min="0" max="10" value="5" class="slider">
+                </div>
+
+                <!-- DEPTH -->
+                <div class="knob-container">
+                    <h4>DEPTH</h4>
+                    <div class="knob-visual">
+                        <svg viewBox="0 0 200 200" class="knob-svg">
+                            <circle cx="100" cy="100" r="80" fill="#2c3e50" stroke="#34495e" stroke-width="4"/>
+                            <line id="depth-current" x1="100" y1="100" x2="100" y2="40" stroke="#e74c3c" stroke-width="6" stroke-linecap="round"/>
+                            <line id="depth-target" x1="100" y1="100" x2="100" y2="40" stroke="#2ecc71" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+                        </svg>
+                    </div>
+                    <div class="knob-values">
+                        <span>Текущее: <strong id="depth-current-val">5</strong></span>
+                        <span class="arrow-text" id="depth-arrow">→</span>
+                        <span>Целевое: <strong id="depth-target-val">--</strong></span>
+                    </div>
+                    <input type="range" id="depth-slider" min="0" max="10" value="5" class="slider">
+                </div>
+
+                <!-- EFFECT -->
+                <div class="knob-container">
+                    <h4>EFFECT</h4>
+                    <div class="knob-visual">
+                        <svg viewBox="0 0 200 200" class="knob-svg">
+                            <circle cx="100" cy="100" r="80" fill="#2c3e50" stroke="#34495e" stroke-width="4"/>
+                            <line id="effect-current" x1="100" y1="100" x2="100" y2="40" stroke="#e74c3c" stroke-width="6" stroke-linecap="round"/>
+                            <line id="effect-target" x1="100" y1="100" x2="100" y2="40" stroke="#2ecc71" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+                        </svg>
+                    </div>
+                    <div class="knob-values">
+                        <span>Текущее: <strong id="effect-current-val">5</strong></span>
+                        <span class="arrow-text" id="effect-arrow">→</span>
+                        <span>Целевое: <strong id="effect-target-val">--</strong></span>
+                    </div>
+                    <input type="range" id="effect-slider" min="0" max="10" value="5" class="slider">
+                </div>
+
+                <!-- DIRECT -->
+                <div class="knob-container">
+                    <h4>DIRECT</h4>
+                    <div class="knob-visual">
+                        <svg viewBox="0 0 200 200" class="knob-svg">
+                            <circle cx="100" cy="100" r="80" fill="#2c3e50" stroke="#34495e" stroke-width="4"/>
+                            <line id="direct-current" x1="100" y1="100" x2="100" y2="40" stroke="#e74c3c" stroke-width="6" stroke-linecap="round"/>
+                            <line id="direct-target" x1="100" y1="100" x2="100" y2="40" stroke="#2ecc71" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+                        </svg>
+                    </div>
+                    <div class="knob-values">
+                        <span>Текущее: <strong id="direct-current-val">5</strong></span>
+                        <span class="arrow-text" id="direct-arrow">→</span>
+                        <span>Целевое: <strong id="direct-target-val">--</strong></span>
+                    </div>
+                    <input type="range" id="direct-slider" min="0" max="10" value="5" class="slider">
+                </div>
+            </div>
+        </section>
+
+        <!-- Прогресс -->
+        <section class="progress-section">
+            <h2>📈 Прогресс настройки</h2>
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <div id="progress-text" class="progress-text">0/7 параметров настроено (0%)</div>
+            <div id="completion-message" class="completion-message hidden">
+                🎉 Пресет настроен идеально! Можете играть!
+            </div>
+        </section>
+
+        <!-- Футер -->
+        <footer>
+            <p>🎸 Boss SY-1 Preset Tuner | Real-time версия</p>
+            <p><a href="https://github.com/your-username/boss-sy1-pwa" target="_blank">
+                <i class="fab fa-github"></i> GitHub
+            </a></p>
+        </footer>
+    </div>
+
+    <script src="presets.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
