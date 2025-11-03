@@ -10,12 +10,26 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <div class="audio-indicator" id="audio-indicator"></div>
+    
     <div class="container">
         <!-- Заголовок -->
         <header>
             <h1><i class="fas fa-guitar"></i> Boss SY-1 Preset Tuner</h1>
-            <p class="subtitle">Real-time настройщик пресетов</p>
+            <p class="subtitle">Real-time настройщик пресетов через микрофон</p>
         </header>
+
+        <!-- Инструкция -->
+        <section class="instruction-box">
+            <h3>📢 Как использовать:</h3>
+            <ol>
+                <li>Включите усилитель на средней громкости</li>
+                <li>Выберите пресет ниже</li>
+                <li>Нажмите "Включить микрофон" и разрешите доступ</li>
+                <li>Сыграйте на гитаре - приложение покажет ноту</li>
+                <li>Настраивайте ручки Boss SY-1 по подсказкам</li>
+            </ol>
+        </section>
 
         <!-- Выбор пресета -->
         <section class="preset-selector">
@@ -33,6 +47,9 @@
             <button id="start-audio" class="btn-primary">
                 <i class="fas fa-microphone"></i> Включить микрофон
             </button>
+            <button id="test-sound" class="btn-secondary" style="display: none;">
+                <i class="fas fa-volume-up"></i> Тест звука (440 Hz)
+            </button>
             <div id="audio-status" class="status-off">
                 <i class="fas fa-circle"></i> Микрофон выключен
             </div>
@@ -40,37 +57,73 @@
 
         <!-- Детектор ноты -->
         <section class="note-detector">
-            <h2>🎵 Текущая нота</h2>
+            <h2>🎵 Анализ звука в реальном времени</h2>
             
             <!-- Индикатор уровня сигнала -->
             <div class="volume-meter">
                 <label>📊 Уровень входящего сигнала:</label>
-                <div class="volume-bar">
-                    <div id="volume-fill" class="volume-fill"></div>
+                <div class="volume-bar-container">
+                    <div class="volume-bar">
+                        <div id="volume-fill" class="volume-fill"></div>
+                    </div>
+                    <div class="volume-threshold">
+                        <span class="threshold-line" title="Минимальный уровень для распознавания">Порог</span>
+                    </div>
                 </div>
                 <div class="volume-info">
-                    <span id="volume-text" class="volume-value">0%</span>
+                    <div class="volume-stats">
+                        <span id="volume-text" class="volume-value">0%</span>
+                        <span id="volume-db" class="volume-db">-∞ dB</span>
+                    </div>
                     <span id="signal-status" class="signal-status">Жду сигнал...</span>
+                </div>
+                <div class="volume-help">
+                    💡 Совет: Сыграйте громко на гитаре. Зелёная полоска должна заполниться минимум на 5-10%
                 </div>
             </div>
 
+            <!-- Дисплей ноты -->
             <div class="note-display">
                 <div class="note-box">
                     <label>Нота:</label>
                     <div id="detected-note" class="note-value">--</div>
+                    <div id="note-confidence" class="note-confidence">Точность: --%</div>
                 </div>
                 <div class="freq-box">
                     <label>Частота:</label>
                     <div id="frequency" class="frequency-value">-- Hz</div>
+                    <div id="freq-range" class="freq-range">Диапазон: 82-1200 Hz</div>
                 </div>
             </div>
             
-            <canvas id="waveform" width="800" height="150"></canvas>
+            <!-- Форма волны -->
+            <div class="waveform-container">
+                <label>🌊 Форма волны:</label>
+                <canvas id="waveform" width="800" height="150"></canvas>
+                <div class="waveform-status" id="waveform-status">
+                    Ожидание звука...
+                </div>
+            </div>
+
+            <!-- Спектральный анализатор -->
+            <div class="spectrum-container">
+                <label>📈 Спектр частот:</label>
+                <canvas id="spectrum" width="800" height="150"></canvas>
+            </div>
             
             <!-- Отладочная информация -->
             <div class="debug-info">
-                <h3>🔧 Отладка:</h3>
-                <div id="debug-output"></div>
+                <div class="debug-header">
+                    <h3>🔧 Диагностика:</h3>
+                    <button id="clear-debug" class="btn-clear">Очистить</button>
+                </div>
+                <div id="debug-output" class="debug-output"></div>
+            </div>
+
+            <!-- Системная информация -->
+            <div class="system-info">
+                <h3>💻 Информация о системе:</h3>
+                <div id="system-output"></div>
             </div>
         </section>
 
@@ -228,7 +281,7 @@
 
         <!-- Футер -->
         <footer>
-            <p>🎸 Boss SY-1 Preset Tuner | Real-time версия</p>
+            <p>🎸 Boss SY-1 Preset Tuner | Real-time версия через микрофон</p>
             <p><a href="https://github.com/biolink23-sketch/boss-sy1-pwa" target="_blank">
                 <i class="fab fa-github"></i> GitHub
             </a></p>
