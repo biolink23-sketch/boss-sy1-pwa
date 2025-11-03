@@ -288,7 +288,7 @@ function detectPitch() {
     
     analyser.getByteTimeDomainData(dataArray);
     
-    // ДОБАВЛЕНО: Расчёт уровня громкости
+    // Расчёт уровня громкости
     let sum = 0;
     for (let i = 0; i < bufferLength; i++) {
         const normalized = (dataArray[i] - 128) / 128;
@@ -297,19 +297,20 @@ function detectPitch() {
     const rms = Math.sqrt(sum / bufferLength);
     const volume = Math.round(rms * 100);
     
-    // ДОБАВЛЕНО: Показываем уровень громкости
-    console.log('Volume level:', volume);
+    // Обновляем индикатор громкости
+    document.getElementById('volume-fill').style.width = `${Math.min(volume * 2, 100)}%`;
+    document.getElementById('volume-text').textContent = `${volume}%`;
     
     // Автокорреляция для определения частоты
     const frequency = autoCorrelate(dataArray, audioContext.sampleRate);
     
-    if (frequency > 0 && volume > 1) { // ИЗМЕНЕНО: добавлена проверка громкости
+    if (frequency > 0 && volume > 1) {
         const note = frequencyToNote(frequency);
         document.getElementById('detected-note').textContent = note;
-        document.getElementById('frequency').textContent = `${frequency.toFixed(2)} Hz (Vol: ${volume})`;
+        document.getElementById('frequency').textContent = `${frequency.toFixed(2)} Hz`;
     } else {
         document.getElementById('detected-note').textContent = '--';
-        document.getElementById('frequency').textContent = `-- Hz (Vol: ${volume})`;
+        document.getElementById('frequency').textContent = `-- Hz`;
     }
     
     setTimeout(() => detectPitch(), 100);
