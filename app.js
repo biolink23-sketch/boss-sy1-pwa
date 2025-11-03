@@ -365,17 +365,27 @@ function setupClearDebugButton() {
     });
 }
 
-// Запуск аудио с выбором устройства
+// Запуск аудио (УПРОЩЁННАЯ ВЕРСИЯ - КАК В ТЕСТЕ)
 async function startAudio() {
     try {
         addDebugLog('Запрос доступа к микрофону...', 'info');
         
-        // Простой запрос без лишних настроек
+        // ПРОСТОЙ ЗАПРОС БЕЗ ЛИШНИХ НАСТРОЕК (как в тесте)
         const stream = await navigator.mediaDevices.getUserMedia({ 
             audio: true  // Минимальные настройки!
         });
         
         addDebugLog('✓ Разрешение получено!', 'success');
+        
+        // Информация о треке
+        const tracks = stream.getAudioTracks();
+        if (tracks.length > 0) {
+            const track = tracks[0];
+            const settings = track.getSettings();
+            addDebugLog(`Используется: ${track.label}`, 'success');
+            addDebugLog(`Настройки: sampleRate=${settings.sampleRate}, channels=${settings.channelCount}`, 'info');
+            addDebugLog(`Статус трека: ${track.readyState}`, 'info');
+        }
         
         // Создаём AudioContext
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -386,7 +396,7 @@ async function startAudio() {
         dataArray = new Uint8Array(bufferLength);
         frequencyArray = new Uint8Array(analyser.frequencyBinCount);
         
-        addDebugLog(`AudioContext: sampleRate=${audioContext.sampleRate}`, 'success');
+        addDebugLog(`AudioContext: sampleRate=${audioContext.sampleRate} Hz, FFT=${analyser.fftSize}`, 'success');
         
         // Подключаем микрофон
         microphone = audioContext.createMediaStreamSource(stream);
@@ -399,6 +409,7 @@ async function startAudio() {
         gainNode.connect(analyser);
         
         addDebugLog('✓ Микрофон подключен с усилением x5', 'success');
+        addDebugLog('💡 ГОВОРИТЕ ГРОМКО или ХЛОПНИТЕ В ЛАДОШИ!', 'warning');
         
         // Сбрасываем статистику
         stats = {
@@ -415,8 +426,25 @@ async function startAudio() {
         drawWaveform();
         drawSpectrum();
         
+        // Через 3 секунды проверяем
+        setTimeout(() => {
+            if (maxVolume === 0) {
+                addDebugLog('⚠️ За 3 секунды не было звука! Проверьте микрофон!', 'error');
+                addDebugLog('Попробуйте хлопнуть в ладоши или крикнуть', 'warning');
+            } else {
+                addDebugLog(`✓ Микрофон работает! Пик громкости: ${maxVolume}%`, 'success');
+            }
+        }, 3000);
+        
     } catch (error) {
-        addDebugLog('✗ ОШИБКА: ' + error.message, 'error');
+        addDebugLog('✗ КРИТИЧЕСКАЯ ОШИБКА: ' + error.message, 'error');
+        if (error.name === 'NotFoundError') {
+            addDebugLog('Микрофон не найден!', 'error');
+        } else if (error.name === 'NotAllowedError') {
+            addDebugLog('Доступ к микрофону запрещён!', 'error');
+        } else if (error.name === 'NotReadableError') {
+            addDebugLog('Микрофон занят другим приложением!', 'error');
+        }
         throw error;
     }
 }
@@ -452,10 +480,10 @@ function stopAudio() {
         ctx.fillRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
     }
     
-    addDebugLog(`Статистика сессии: обработано ${stats.totalSamples} сэмплов, распознано ${stats.detectedFrequencies} частот, пик ${stats.peakVolume}%`, 'info');
+    addDebugLog(`Статистика: обработано ${stats.totalSamples} сэмплов, распознано ${stats.detectedFrequencies} частот, пик ${stats.peakVolume}%`, 'info');
 }
 
-// Детекция высоты тона
+// Детекция высоты тона (УПРОЩЁННАЯ - КАК В ТЕСТЕ)
 function detectPitch() {
     if (!isAudioActive) return;
     
@@ -475,6 +503,7 @@ function detectPitch() {
     // Обновляем историю
     volumeHistory.push(volume);
     if (volumeHistory.length > 10) volumeHistory.shift();
+    avgVolume = Math.round(volumeHistory.reduce((a, b) => a + b, 0) / volumeHistory.length);
     
     if (volume > maxVolume) {
         maxVolume = volume;
@@ -489,6 +518,8 @@ function detectPitch() {
     const volumeText = document.getElementById('volume-text');
     const volumeDb = document.getElementById('volume-db');
     const signalStatus = document.getElementById('signal-status');
+    const audioIndicator = document.getElementById('audio-indicator');
+    const waveformStatus = document.getElementById('waveform-status');
     
     if (volumeFill && volumeText) {
         const displayVolume = Math.min(volume, 100);
@@ -496,47 +527,34 @@ function detectPitch() {
         volumeText.textContent = `${volume}%`;
         volumeDb.textContent = db === -Infinity ? '-∞ dB' : `${db.toFixed(1)} dB`;
         
-        // Статус
+        // Статус сигнала
         if (volume < 1) {
-            signalStatus.textContent = '🔇 Нет сигнала';
+            signalStatus.textContent = '🔇 Нет сигнала - Хлопните в ладоши!';
             signalStatus.style.color = '#e74c3c';
+            audioIndicator.className = 'audio-indicator off';
+            waveformStatus.textContent = 'Ожидание звука...';
         } else if (volume < 5) {
-            signalStatus.textContent = '🔉 Слабый сигнал';
+            signalStatus.textContent = '🔉 Слабый сигнал - Говорите громче!';
             signalStatus.style.color = '#f39c12';
-        } else {
+            audioIndicator.className = 'audio-indicator weak';
+            waveformStatus.textContent = 'Сигнал слабый';
+        } else if (volume < 15) {
             signalStatus.textContent = '🔊 Сигнал хороший!';
             signalStatus.style.color = '#2ecc71';
+            audioIndicator.className = 'audio-indicator good';
+            waveformStatus.textContent = 'Сигнал хороший!';
+        } else {
+            signalStatus.textContent = '🔊🔊 Отличный сигнал!';
+            signalStatus.style.color = '#27ae60';
+            audioIndicator.className = 'audio-indicator excellent';
+            waveformStatus.textContent = 'Отличный сигнал!';
         }
     }
     
-    // Автокорреляция
-    const frequency = autoCorrelate(dataArray, audioContext.sampleRate);
-    
-    if (frequency > 0 && volume > 0.3) {
-        const note = frequencyToNote(frequency);
-        const confidence = Math.min(100, Math.round((volume / 20) * 100));
-        
-        document.getElementById('detected-note').textContent = note;
-        document.getElementById('frequency').textContent = `${frequency.toFixed(2)} Hz`;
-        document.getElementById('note-confidence').textContent = `Точность: ${confidence}%`;
-        
-        stats.detectedFrequencies++;
-        
-        if (!window.lastNote || window.lastNote !== note) {
-            addDebugLog(`♪ ${note} (${frequency.toFixed(1)} Hz, ${volume}%)`, 'success');
-            window.lastNote = note;
-        }
-    } else {
-        document.getElementById('detected-note').textContent = '--';
-        document.getElementById('frequency').textContent = '-- Hz';
-        document.getElementById('note-confidence').textContent = 'Точность: --%';
-    }
-    
-    setTimeout(() => detectPitch(), 30);
     // Автокорреляция для определения частоты
     const frequency = autoCorrelate(dataArray, audioContext.sampleRate);
     
-    // Порог 0.3% для максимальной чувствительности
+    // Порог 0.3% для чувствительности
     if (frequency > 0 && volume > 0.3) {
         const note = frequencyToNote(frequency);
         const confidence = Math.min(100, Math.round((volume / 20) * 100));
@@ -562,13 +580,9 @@ function detectPitch() {
         document.getElementById('frequency').textContent = '-- Hz';
         document.getElementById('note-confidence').textContent = 'Точность: --%';
         
-        // Логируем проблемы
-        if (volume < 0.3 && stats.totalSamples % 50 === 0) {
-            addDebugLog(`⚠ Сигнал слишком слабый: ${volume}% (нужно >0.3%). Макс: ${maxVolume}%, Средн: ${avgVolume}%`, 'warning');
-        }
-        
-        if (volume >= 0.3 && frequency <= 0 && stats.totalSamples % 50 === 0) {
-            addDebugLog(`⚠ Есть звук (${volume}%), но частота не определена. Возможно, шум или слишком сложный сигнал.`, 'warning');
+        // Логируем проблемы реже
+        if (volume < 0.3 && stats.totalSamples % 100 === 0) {
+            addDebugLog(`⚠ Сигнал слабый: ${volume}% (нужно >0.3%). Макс: ${maxVolume}%`, 'warning');
         }
     }
     
