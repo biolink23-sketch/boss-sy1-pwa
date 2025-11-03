@@ -8,125 +8,193 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS стили (СВЕТЛЫЙ ФОН + БОЛЬШИЕ КНОПКИ НОТ)
+# CSS стили (ИСПРАВЛЕНО: работает в темном режиме + уменьшены кнопки)
 st.markdown("""
 <style>
-    /* Светлый фон */
+    /* Принудительный светлый фон для main */
     .main {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
     }
     
-    /* БОЛЬШИЕ ЯРКИЕ КНОПКИ НОТ */
+    /* Принудительный светлый фон для всех блоков */
+    .block-container {
+        background-color: white !important;
+        padding: 2rem !important;
+        border-radius: 10px !important;
+    }
+    
+    /* Текст виден на светлом фоне */
+    .main h1, .main h2, .main h3, .main p, .main li {
+        color: #2c3e50 !important;
+    }
+    
+    /* КНОПКИ НОТ: большие но не огромные */
     .stButton > button {
-        width: 100%;
-        height: 100px !important;
-        font-size: 36px !important;
-        font-weight: bold;
-        border-radius: 15px;
+        width: 100% !important;
+        height: 70px !important;
+        font-size: 28px !important;
+        font-weight: bold !important;
+        border-radius: 15px !important;
         border: 3px solid #2c3e50 !important;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
         color: white !important;
-        transition: all 0.3s;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
     }
     .stButton > button:hover {
-        transform: scale(1.08);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        transform: scale(1.05) !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
         border-color: #e74c3c !important;
     }
     
     /* Метрики */
     div[data-testid="stMetricValue"] {
-        font-size: 32px;
-        font-weight: bold;
-        color: #2c3e50;
+        font-size: 28px !important;
+        font-weight: bold !important;
+        color: #2c3e50 !important;
+    }
+    
+    div[data-testid="stMetricDelta"] {
+        color: #2c3e50 !important;
     }
     
     /* Success box */
     .success-box {
-        padding: 20px;
-        background-color: #d4edda;
-        border-left: 4px solid #28a745;
-        border-radius: 10px;
-        color: #155724;
-        font-size: 18px;
-        font-weight: bold;
-        margin: 20px 0;
+        padding: 20px !important;
+        background-color: #d4edda !important;
+        border-left: 4px solid #28a745 !important;
+        border-radius: 10px !important;
+        color: #155724 !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        margin: 20px 0 !important;
     }
     
     /* Warning box */
     .warning-box {
-        padding: 20px;
-        background-color: #fff3cd;
-        border-left: 4px solid #ffc107;
-        border-radius: 10px;
-        color: #856404;
-        font-size: 18px;
-        font-weight: bold;
-        margin: 20px 0;
+        padding: 20px !important;
+        background-color: #fff3cd !important;
+        border-left: 4px solid #ffc107 !important;
+        border-radius: 10px !important;
+        color: #856404 !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        margin: 20px 0 !important;
     }
     
     /* Info box */
     .info-box {
-        padding: 20px;
-        background-color: #e7f3ff;
-        border-left: 4px solid #2196F3;
-        border-radius: 10px;
-        margin: 20px 0;
-        color: #0d47a1;
+        padding: 20px !important;
+        background-color: #e7f3ff !important;
+        border-left: 4px solid #2196F3 !important;
+        border-radius: 10px !important;
+        margin: 20px 0 !important;
+        color: #0d47a1 !important;
+    }
+    
+    .info-box h4 {
+        color: #0d47a1 !important;
+        margin-top: 0 !important;
+    }
+    
+    .info-box ul {
+        color: #0d47a1 !important;
+    }
+    
+    .info-box li {
+        color: #0d47a1 !important;
     }
     
     /* Preset info box */
     .preset-info {
-        padding: 25px;
-        background: white;
-        border-radius: 15px;
-        border-left: 5px solid #e74c3c;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin: 20px 0;
+        padding: 25px !important;
+        background: white !important;
+        border-radius: 15px !important;
+        border-left: 5px solid #e74c3c !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+        margin: 20px 0 !important;
+    }
+    
+    .preset-info h3 {
+        color: #2c3e50 !important;
+        margin-top: 0 !important;
+    }
+    
+    .preset-info p {
+        color: #34495e !important;
+        line-height: 1.6 !important;
+    }
+    
+    .preset-info strong {
+        color: #2c3e50 !important;
     }
     
     /* Setting box */
     .setting-box {
-        padding: 15px;
-        background-color: white;
-        border-left: 4px solid #3498db;
-        border-radius: 10px;
-        margin: 10px 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        padding: 15px !important;
+        background-color: white !important;
+        border-left: 4px solid #3498db !important;
+        border-radius: 10px !important;
+        margin: 10px 0 !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
     }
     .setting-label {
-        font-weight: bold;
-        font-size: 18px;
-        color: #2c3e50;
+        font-weight: bold !important;
+        font-size: 18px !important;
+        color: #2c3e50 !important;
     }
     .setting-value {
-        font-size: 20px;
-        font-weight: bold;
-        color: white;
-        background-color: #3498db;
-        padding: 10px 20px;
-        border-radius: 20px;
+        font-size: 20px !important;
+        font-weight: bold !important;
+        color: white !important;
+        background-color: #3498db !important;
+        padding: 10px 20px !important;
+        border-radius: 20px !important;
     }
     
-    /* Sidebar */
+    /* Sidebar светлый фон */
     [data-testid="stSidebar"] {
-        background-color: #ffffff;
+        background-color: #ffffff !important;
+    }
+    
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] li {
+        color: #2c3e50 !important;
+    }
+    
+    [data-testid="stSidebar"] a {
+        color: #3498db !important;
     }
     
     /* Категории */
     .category-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 15px;
-        border-radius: 10px;
-        font-size: 20px;
-        font-weight: bold;
-        margin: 20px 0 10px 0;
-        text-align: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        padding: 15px !important;
+        border-radius: 10px !important;
+        font-size: 20px !important;
+        font-weight: bold !important;
+        margin: 20px 0 10px 0 !important;
+        text-align: center !important;
+    }
+    
+    /* Selectbox */
+    .stSelectbox label {
+        color: #2c3e50 !important;
+        font-weight: bold !important;
+    }
+    
+    /* Expander */
+    .streamlit-expanderHeader {
+        background-color: #e7f3ff !important;
+        color: #2c3e50 !important;
+        font-weight: bold !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -438,7 +506,7 @@ with st.expander("📖 Быстрый старт", expanded=False):
     2. Выберите пресет из списка
     3. Используйте любой гитарный тюнер (телефон/онлайн)
     4. Сыграйте на гитаре и посмотрите ноту на тюнере
-    5. Нажмите эту ноту в приложении (БОЛЬШИЕ КНОПКИ)
+    5. Нажмите эту ноту в приложении
     6. Получите настройки Boss SY-1 и справку о пресете!
     """)
 
@@ -484,7 +552,7 @@ if category:
         </div>
         """, unsafe_allow_html=True)
         
-        # 4️⃣ ВЫБОР НОТЫ (БОЛЬШИЕ КНОПКИ!)
+        # 4️⃣ ВЫБОР НОТЫ
         st.markdown("---")
         st.subheader("3️⃣ Какую ноту вы играете?")
         st.markdown("*Посмотрите на тюнер и нажмите соответствующую ноту*")
@@ -599,7 +667,7 @@ if category:
                 </div>
                 """, unsafe_allow_html=True)
             
-            # 7️⃣ ВИЗУАЛИЗАЦИЯ (оставляем как было)
+            # 7️⃣ ВИЗУАЛИЗАЦИЯ
             st.markdown("---")
             st.subheader("📊 Визуализация")
             
@@ -627,7 +695,7 @@ if category:
                     delta=preset['type']
                 )
             
-            # 8️⃣ ПОДХОДЯЩИЕ НОТЫ (оставляем)
+            # 8️⃣ ПОДХОДЯЩИЕ НОТЫ
             st.markdown("---")
             st.subheader("🎼 Подходящие ноты для этого пресета")
             
@@ -642,7 +710,7 @@ if category:
                         help=f"{'Вы играете эту ноту!' if is_current else 'Попробуйте сыграть эту ноту'}"
                     )
             
-            # 9️⃣ НОВЫЕ UI ФИЧИ
+            # 9️⃣ ДОПОЛНИТЕЛЬНЫЕ ИНСТРУМЕНТЫ
             st.markdown("---")
             st.subheader("🎛️ Дополнительные инструменты")
             
@@ -682,14 +750,14 @@ if category:
                 
                 if st.button("📋 Копировать настройки", use_container_width=True):
                     settings_text = f"""
-                    {preset_name}
-                    TYPE: {preset['type']}
-                    VARIATION: {preset['variation']}
-                    TONE: {preset['tone']}
-                    DEPTH: {preset['depth']}
-                    EFFECT: {preset['effect']}
-                    DIRECT: {preset['direct']}
-                    MODE: {preset['mode']}
+{preset_name}
+TYPE: {preset['type']}
+VARIATION: {preset['variation']}
+TONE: {preset['tone']}
+DEPTH: {preset['depth']}
+EFFECT: {preset['effect']}
+DIRECT: {preset['direct']}
+MODE: {preset['mode']}
                     """
                     st.code(settings_text, language="text")
                 
