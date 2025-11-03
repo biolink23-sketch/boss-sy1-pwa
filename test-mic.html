@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест микрофона - MediaRecorder API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .test-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .test-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+            color: white;
+        }
+
+        .btn-primary {
+            background: #3498db;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #2ecc71;
+        }
+
+        .btn-success:hover {
+            background: #27ae60;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .log {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-entry {
+            padding: 5px;
+            margin: 5px 0;
+            border-left: 3px solid;
+        }
+
+        .log-info { border-color: #3498db; }
+        .log-success { border-color: #2ecc71; }
+        .log-error { border-color: #e74c3c; }
+        .log-warning { border-color: #f39c12; }
+
+        .volume-meter {
+            width: 100%;
+            height: 40px;
+            background: #ecf0f1;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 20px 0;
+            border: 2px solid #bdc3c7;
+        }
+
+        .volume-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        .volume-text {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 150px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #3498db;
+        }
+
+        .device-list {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .device-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+
+        .buttons {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        audio {
+            width: 100%;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Тест микрофона</h1>
+        <p class="subtitle">Альтернативный метод: MediaRecorder API</p>
+
+        <!-- Тест 1: Список устройств -->
+        <div class="test-section">
+            <h2>Тест 1: Обнаружение устройств</h2>
+            <div class="buttons">
+                <button class="btn btn-primary" onclick="test1_listDevices()">
+                    🔍 Найти микрофоны
+                </button>
+            </div>
+            <div id="test1-status"></div>
+            <div id="test1-devices"></div>
+        </div>
+
+        <!-- Тест 2: Запрос разрешения -->
+        <div class="test-section">
+            <h2>Тест 2: Запрос доступа к микрофону</h2>
+            <div class="buttons">
+                <button class="btn btn-primary" onclick="test2_requestPermission()">
+                    🔓 Запросить разрешение
+                </button>
+            </div>
+            <div id="test2-status"></div>
+        </div>
+
+        <!-- Тест 3: MediaRecorder -->
+        <div class="test-section">
+            <h2>Тест 3: Запись через MediaRecorder</h2>
+            <div class="buttons">
+                <button class="btn btn-success" onclick="test3_startRecording()">
+                    ⏺️ Начать запись (5 сек)
+                </button>
+            </div>
+            <div id="test3-status"></div>
+            <audio id="test3-playback" controls style="display: none;"></audio>
+        </div>
+
+        <!-- Тест 4: Web Audio API -->
+        <div class="test-section">
+            <h2>Тест 4: Web Audio API (текущий метод)</h2>
+            <div class="buttons">
+                <button class="btn btn-success" onclick="test4_startWebAudio()">
+                    ▶️ Запустить анализ
+                </button>
+                <button class="btn btn-danger" onclick="test4_stopWebAudio()">
+                    ⏹️ Остановить
+                </button>
+            </div>
+            <div id="test4-status"></div>
+            <div class="volume-meter">
+                <div id="test4-volume-fill" class="volume-fill"></div>
+            </div>
+            <div id="test4-volume-text" class="volume-text">0%</div>
+            <canvas id="test4-waveform" width="800" height="150"></canvas>
+        </div>
+
+        <!-- Тест 5: Альтернативный метод -->
+        <div class="test-section">
+            <h2>Тест 5: ScriptProcessor (старый метод)</h2>
+            <div class="buttons">
+                <button class="btn btn-success" onclick="test5_startScriptProcessor()">
+                    ▶️ Запустить
+                </button>
+                <button class="btn btn-danger" onclick="test5_stopScriptProcessor()">
+                    ⏹️ Остановить
+                </button>
+            </div>
+            <div id="test5-status"></div>
+            <div class="volume-meter">
+                <div id="test5-volume-fill" class="volume-fill"></div>
+            </div>
+            <div id="test5-volume-text" class="volume-text">0%</div>
+        </div>
+
+        <!-- Лог -->
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        let logs = [];
+        let test3_mediaRecorder = null;
+        let test3_chunks = [];
+        let test4_audioContext = null;
+        let test4_analyser = null;
+        let test4_microphone = null;
+        let test4_animationId = null;
+        let test5_audioContext = null;
+        let test5_processor = null;
+        let test5_microphone = null;
+
+        // Функция логирования
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = { time: timestamp, message, type };
+            logs.unshift(entry);
+            if (logs.length > 50) logs.pop();
+            
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML = logs.map(l => 
+                `<div class="log-entry log-${l.type}">[${l.time}] ${l.message}</div>`
+            ).join('');
+            
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        // Тест 1: Список устройств
+        async function test1_listDevices() {
+            const statusDiv = document.getElementById('test1-status');
+            const devicesDiv = document.getElementById('test1-devices');
+            
+            try {
+                log('Запрос списка устройств...', 'info');
+                statusDiv.innerHTML = '<div class="status status-info">⏳ Получаю список устройств...</div>';
+                
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioInputs = devices.filter(d => d.kind === 'audioinput');
+                
+                log(`Найдено устройств: ${audioInputs.length}`, 'success');
+                
+                if (audioInputs.length === 0) {
+                    statusDiv.innerHTML = '<div class="status status-error">❌ Микрофоны не найдены!</div>';
+                    log('Микрофоны не найдены!', 'error');
+                    return;
+                }
+                
+                statusDiv.innerHTML = `<div class="status status-success">✅ Найдено микрофонов: ${audioInputs.length}</div>`;
+                
+                devicesDiv.innerHTML = '<div class="device-list">' + 
+                    audioInputs.map((d, i) => {
+                        const label = d.label || `Микрофон ${i + 1}`;
+                        log(`  ${i + 1}. ${label} (${d.deviceId.substring(0, 20)}...)`, 'info');
+                        return `<div class="device-item">
+                            <strong>${i + 1}.</strong> ${label}<br>
+                            <small>ID: ${d.deviceId.substring(0, 40)}...</small>
+                        </div>`;
+                    }).join('') + 
+                '</div>';
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status status-error">❌ Ошибка: ${error.message}</div>`;
+                log(`Ошибка: ${error.message}`, 'error');
+            }
+        }
+
+        // Тест 2: Запрос разрешения
+        async function test2_requestPermission() {
+            const statusDiv = document.getElementById('test2-status');
+            
+            try {
+                log('Запрос разрешения на микрофон...', 'info');
+                statusDiv.innerHTML = '<div class="status status-info">⏳ Запрашиваю разрешение...</div>';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                log('✅ Разрешение получено!', 'success');
+                statusDiv.innerHTML = '<div class="status status-success">✅ Разрешение получено!</div>';
+                
+                const tracks = stream.getAudioTracks();
+                if (tracks.length > 0) {
+                    const track = tracks[0];
+                    const settings = track.getSettings();
+                    
+                    log(`Микрофон: ${track.label}`, 'success');
+                    log(`Настройки: sampleRate=${settings.sampleRate}, channels=${settings.channelCount}`, 'info');
+                    log(`Статус: ${track.readyState}`, 'info');
+                    
+                    statusDiv.innerHTML += `
+                        <div class="status status-info">
+                            <strong>Микрофон:</strong> ${track.label}<br>
+                            <strong>Sample Rate:</strong> ${settings.sampleRate} Hz<br>
+                            <strong>Channels:</strong> ${settings.channelCount}<br>
+                            <strong>Статус:</strong> ${track.readyState}
+                        </div>
+                    `;
+                }
+                
+                // Останавливаем поток
+                stream.getTracks().forEach(track => track.stop());
+                
+            } catch (error) {
+                log(`❌ Ошибка: ${error.name} - ${error.message}`, 'error');
+                statusDiv.innerHTML = `<div class="status status-error">❌ Ошибка: ${error.message}</div>`;
+                
+                if (error.name === 'NotAllowedError') {
+                    statusDiv.innerHTML += '<div class="status status-warning">⚠️ Доступ запрещён! Проверьте настройки браузера и системы.</div>';
+                } else if (error.name === 'NotFoundError') {
+                    statusDiv.innerHTML += '<div class="status status-warning">⚠️ Микрофон не найден!</div>';
+                }
+            }
+        }
+
+        // Тест 3: MediaRecorder
+        async function test3_startRecording() {
+            const statusDiv = document.getElementById('test3-status');
+            const playback = document.getElementById('test3-playback');
+            
+            try {
+                log('Начинаю запись через MediaRecorder...', 'info');
+                statusDiv.innerHTML = '<div class="status status-info">⏺️ Запись... Говорите!</div>';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                test3_chunks = [];
+                test3_mediaRecorder = new MediaRecorder(stream);
+                
+                test3_mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        test3_chunks.push(e.data);
+                        log(`Получен chunk: ${e.data.size} bytes`, 'info');
+                    }
+                };
+                
+                test3_mediaRecorder.onstop = () => {
+                    const blob = new Blob(test3_chunks, { type: 'audio/webm' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    playback.src = url;
+                    playback.style.display = 'block';
+                    
+                    log(`✅ Запись завершена! Размер: ${blob.size} bytes`, 'success');
+                    statusDiv.innerHTML = `
+                        <div class="status status-success">
+                            ✅ Запись завершена!<br>
+                            Размер: ${(blob.size / 1024).toFixed(2)} KB<br>
+                            Воспроизведите ниже:
+                        </div>
+                    `;
+                    
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                test3_mediaRecorder.start();
+                log('MediaRecorder запущен', 'success');
+                
+                // Останавливаем через 5 секунд
+                setTimeout(() => {
+                    if (test3_mediaRecorder && test3_mediaRecorder.state === 'recording') {
+                        test3_mediaRecorder.stop();
+                        log('Запись остановлена', 'info');
+                    }
+                }, 5000);
+                
+            } catch (error) {
+                log(`❌ Ошибка: ${error.message}`, 'error');
+                statusDiv.innerHTML = `<div class="status status-error">❌ Ошибка: ${error.message}</div>`;
+            }
+        }
+
+        // Тест 4: Web Audio API (текущий метод)
+        async function test4_startWebAudio() {
+            const statusDiv = document.getElementById('test4-status');
+            
+            try {
+                log('Запуск Web Audio API...', 'info');
+                statusDiv.innerHTML = '<div class="status status-info">▶️ Запуск анализа...</div>';
+                
+                test4_audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                test4_analyser = test4_audioContext.createAnalyser();
+                test4_analyser.fftSize = 2048;
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: true
+                    }
+                });
+                
+                test4_microphone = test4_audioContext.createMediaStreamSource(stream);
+                
+                // Добавляем усилитель
+                const gainNode = test4_audioContext.createGain();
+                gainNode.gain.value = 5.0;
+                
+                test4_microphone.connect(gainNode);
+                gainNode.connect(test4_analyser);
+                
+                log('✅ Web Audio API запущен', 'success');
+                log(`AudioContext: sampleRate=${test4_audioContext.sampleRate}`, 'info');
+                statusDiv.innerHTML = '<div class="status status-success">✅ Анализ запущен! Говорите или хлопайте!</div>';
+                
+                test4_analyze();
+                
+            } catch (error) {
+                log(`❌ Ошибка: ${error.message}`, 'error');
+                statusDiv.innerHTML = `<div class="status status-error">❌ Ошибка: ${error.message}</div>`;
+            }
+        }
+
+        function test4_analyze() {
+            if (!test4_analyser) return;
+            
+            const bufferLength = test4_analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            test4_analyser.getByteTimeDomainData(dataArray);
+            
+            // Расчёт громкости
+            let sum = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                const normalized = (dataArray[i] - 128) / 128;
+                sum += normalized * normalized;
+            }
+            const rms = Math.sqrt(sum / bufferLength);
+            const volume = Math.round(rms * 300);
+            
+            // Обновляем индикатор
+            const volumeFill = document.getElementById('test4-volume-fill');
+            const volumeText = document.getElementById('test4-volume-text');
+            
+            volumeFill.style.width = `${Math.min(volume, 100)}%`;
+            volumeText.textContent = `${volume}%`;
+            
+            if (volume > 0) {
+                volumeText.style.color = '#2ecc71';
+            }
+            
+            // Рисуем форму волны
+            const canvas = document.getElementById('test4-waveform');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, width, height);
+            
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#3498db';
+            ctx.beginPath();
+            
+            const sliceWidth = width / bufferLength;
+            let x = 0;
+            
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * height / 2;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                
+                x += sliceWidth;
+            }
+            
+            ctx.lineTo(width, height / 2);
+            ctx.stroke();
+            
+            test4_animationId = requestAnimationFrame(test4_analyze);
+        }
+
+        function test4_stopWebAudio() {
+            if (test4_microphone) {
+                test4_microphone.disconnect();
+                test4_microphone = null;
+            }
+            if (test4_audioContext) {
+                test4_audioContext.close();
+                test4_audioContext = null;
+            }
+            if (test4_animationId) {
+                cancelAnimationFrame(test4_animationId);
+            }
+            
+            log('Web Audio API остановлен', 'info');
+            document.getElementById('test4-status').innerHTML = '<div class="status status-info">⏹️ Остановлено</div>';
+        }
+
+        // Тест 5: ScriptProcessor (старый метод)
+        async function test5_startScriptProcessor() {
+            const statusDiv = document.getElementById('test5-status');
+            
+            try {
+                log('Запуск ScriptProcessor...', 'info');
+                statusDiv.innerHTML = '<div class="status status-info">▶️ Запуск...</div>';
+                
+                test5_audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                test5_microphone = test5_audioContext.createMediaStreamSource(stream);
+                test5_processor = test5_audioContext.createScriptProcessor(4096, 1, 1);
+                
+                test5_processor.onaudioprocess = (e) => {
+                    const input = e.inputBuffer.getChannelData(0);
+                    
+                    // Расчёт громкости
+                    let sum = 0;
+                    for (let i = 0; i < input.length; i++) {
+                        sum += input[i] * input[i];
+                    }
+                    const rms = Math.sqrt(sum / input.length);
+                    const volume = Math.round(rms * 1000);
+                    
+                    // Обновляем индикатор
+                    const volumeFill = document.getElementById('test5-volume-fill');
+                    const volumeText = document.getElementById('test5-volume-text');
+                    
+                    volumeFill.style.width = `${Math.min(volume, 100)}%`;
+                    volumeText.textContent = `${volume}%`;
+                    
+                    if (volume > 0) {
+                        volumeText.style.color = '#2ecc71';
+                    }
+                };
+                
+                test5_microphone.connect(test5_processor);
+                test5_processor.connect(test5_audioContext.destination);
+                
+                log('✅ ScriptProcessor запущен', 'success');
+                statusDiv.innerHTML = '<div class="status status-success">✅ Запущен! Говорите или хлопайте!</div>';
+                
+            } catch (error) {
+                log(`❌ Ошибка: ${error.message}`, 'error');
+                statusDiv.innerHTML = `<div class="status status-error">❌ Ошибка: ${error.message}</div>`;
+            }
+        }
+
+        function test5_stopScriptProcessor() {
+            if (test5_processor) {
+                test5_processor.disconnect();
+                test5_processor = null;
+            }
+            if (test5_microphone) {
+                test5_microphone.disconnect();
+                test5_microphone = null;
+            }
+            if (test5_audioContext) {
+                test5_audioContext.close();
+                test5_audioContext = null;
+            }
+            
+            log('ScriptProcessor остановлен', 'info');
+            document.getElementById('test5-status').innerHTML = '<div class="status status-info">⏹️ Остановлено</div>';
+        }
+
+        // Инициализация
+        log('Тестовая страница загружена', 'success');
+        log('Начните с Теста 1: Найти микрофоны', 'info');
+    </script>
+</body>
+</html>
